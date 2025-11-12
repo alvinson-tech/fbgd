@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Group Detection from Fingerprints</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            color: #2d3748;
+            line-height: 1.5;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            background: linear-gradient(135deg, #c53030, #9b2c2c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.2rem;
+            font-weight: 700;
+        }
+
+        .header .tagline {
+            font-size: 0.9rem;
+            color: #718096;
+            font-weight: 400;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.8rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .info-section h2 {
+            color: #1a202c;
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .info-section h3 {
+            color: #2d3748;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .info-section p {
+            color: #4a5568;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+        }
+
+        .info-section ul {
+            color: #4a5568;
+            margin-left: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .info-section li {
+            margin-bottom: 0.4rem;
+            font-size: 0.95rem;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #c53030, #9b2c2c);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .upload-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.8rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            position: sticky;
+            top: 100px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: #1a202c;
+            margin-bottom: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 2px dashed #a0aec0;
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(247, 250, 252, 0.5);
+        }
+
+        .upload-area:hover {
+            background: rgba(237, 242, 247, 0.8);
+            border-color: #718096;
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            background: rgba(237, 242, 247, 1);
+            border-color: #4a5568;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .upload-text {
+            color: #718096;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #c53030, #9b2c2c);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(197, 48, 48, 0.25);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(197, 48, 48, 0.35);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            box-shadow: none;
+            color: #718096;
+        }
+
+        .preview-container {
+            margin-top: 1.2rem;
+            text-align: center;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 10px;
+            margin-top: 0.8rem;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .result {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.success {
+            background: rgba(72, 187, 120, 0.1);
+            border: 2px solid #48bb78;
+        }
+
+        .result.error {
+            background: rgba(245, 101, 101, 0.1);
+            border: 2px solid #f56565;
+        }
+
+        .result-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: #1a202c;
+        }
+
+        .blood-group {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #c53030, #9b2c2c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0.8rem 0;
+        }
+
+        .confidence {
+            color: #4a5568;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 1.2rem;
+        }
+
+        .spinner {
+            border: 3px solid rgba(160, 174, 192, 0.3);
+            border-top: 3px solid #c53030;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .file-name {
+            margin-top: 0.8rem;
+            color: #4299e1;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            background: rgba(255, 255, 255, 0.95);
+            color: #718096;
+            text-align: center;
+            padding: 1.2rem;
+            margin-top: 2rem;
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .footer p {
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+        }
+
+        .footer-links {
+            margin-top: 1rem;
+        }
+
+        .footer-links a {
+            color: #4299e1;
+            text-decoration: none;
+            margin: 0 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #3182ce;
+        }
+
+        @media (max-width: 968px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .upload-section {
+                position: relative;
+                top: 0;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header .tagline {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>🩸 Blood Group Detection System</h1>
+            <p class="tagline">Fingerprint Analysis for Blood Type Identification</p>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="info-section">
+            <h2>About This Project</h2>
+            <p>
+                This innovative system uses cutting-edge deep learning technology to detect blood groups 
+                from fingerprint images. By analyzing the unique patterns and characteristics present in 
+                fingerprints, our AI model can predict blood types with remarkable accuracy.
+            </p>
+
+            <h3>🔬 How It Works</h3>
+            <p>The detection process involves several sophisticated steps:</p>
+            <ul>
+                <li><strong>Image Preprocessing:</strong> The uploaded fingerprint is converted to grayscale and resized to optimal dimensions for analysis</li>
+                <li><strong>Feature Extraction:</strong> A Convolutional Neural Network (CNN) extracts distinctive patterns from the fingerprint</li>
+                <li><strong>Deep Learning Analysis:</strong> Multiple layers process the extracted features to identify blood group markers</li>
+                <li><strong>Classification:</strong> The model predicts the blood group based on learned patterns from thousands of training samples</li>
+            </ul>
+
+            <h3>📋 Usage Instructions</h3>
+            <ul>
+                <li>Upload a clear fingerprint image (BMP, JPG, PNG formats supported)</li>
+                <li>Ensure the fingerprint is well-lit and clearly visible</li>
+                <li>Click "Detect Blood Group" to analyze</li>
+                <li>View your results with confidence score</li>
+            </ul>
+        </div>
+
+        <div class="upload-section">
+            <h2 class="section-title">Upload Fingerprint Image</h2>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <p class="upload-text">Drag & Drop your fingerprint image here</p>
+                <p class="upload-text">or</p>
+                <button class="btn" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <div class="file-name" id="fileName"></div>
+
+            <div class="preview-container" id="previewContainer" style="display: none;">
+                <img id="previewImage" class="preview-image" alt="Preview">
+                <br>
+                <button class="btn" id="predictBtn">🔍 Detect Blood Group</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 1rem; color: #718096;">Analyzing fingerprint...</p>
+            </div>
+
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2025 Blood Group Detection System. All rights reserved.</p>
+        <p>Powered by Deep Learning & Computer Vision</p>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const predictBtn = document.getElementById('predictBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const fileName = document.getElementById('fileName');
+
+        let selectedFile = null;
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = `✓ Selected: ${file.name}`;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+                result.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        predictBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            predictBtn.disabled = true;
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                loading.style.display = 'none';
+                predictBtn.disabled = false;
+
+                if (response.ok) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <div class="result-title">✅ Blood Group Detected!</div>
+                        <div class="blood-group">${data.blood_group}</div>
+                        <div class="confidence">Confidence: ${data.confidence}</div>
+                    `;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        <div class="result-title">❌ Error</div>
+                        <p style="color: #718096;">${data.error}</p>
+                    `;
+                }
+
+                result.style.display = 'block';
+            } catch (error) {
+                loading.style.display = 'none';
+                predictBtn.disabled = false;
+                result.className = 'result error';
+                result.innerHTML = `
+                    <div class="result-title">❌ Error</div>
+                    <p style="color: #718096;">Failed to process image. Please try again.</p>
+                `;
+                result.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
